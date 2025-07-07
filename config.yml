@@ -1,0 +1,24 @@
+general:
+  log_file: test/test_gpu.log
+
+model:
+  size: small
+  device: cuda
+
+structure:
+  file_path: test/test.gjf
+  charge: 0
+  spin: 1
+
+task:
+  optimization:
+    run: True
+    traj_file: test/test.traj
+    optimized_atoms_file: test/test_optimized.xyz
+    fmax: 0.01
+    steps: 100000000
+  spe_calculation:
+    run: True
+  vib_calculation:
+    run: True
+    name: test/vib
