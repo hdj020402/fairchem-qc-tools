@@ -115,6 +115,24 @@ def parse_args_into_config(config: dict):
 
     return config
 
+def update_dict(a: dict, b: dict) -> dict:
+    result = a.copy()
+    for k, v in b.items():
+        if isinstance(v, dict) and k in result and isinstance(result[k], dict):
+            result[k] = update_dict(result[k], v)
+        else:
+            result[k] = v
+    return result
+
+def get_config_value(config, *keys, default=None):
+    current = config
+    for key in keys:
+        if isinstance(current, dict) and key in current:
+            current = current[key]
+        else:
+            return default
+    return current
+
 def generate_uid(length: int=6):
     characters = string.ascii_letters + string.digits
     return ''.join(secrets.choice(characters) for _ in range(length))
@@ -124,11 +142,11 @@ def build_task_log_info(filepath: str):
     safe_filename = re.sub(r'[^\w\-]', '_', filename)
     timestamp = time.strftime('%Y%m%d_%H%M%S')
     uid = generate_uid()
-    task_name = f'{safe_filename}_{timestamp}_{uid}'
+    task_id = f'{safe_filename}_{timestamp}_{uid}'
 
-    log_dir = os.path.join(os.path.dirname(filepath), "logs")
+    log_dir = os.path.join(os.path.dirname(filepath), "logs", task_id)
     os.makedirs(log_dir, exist_ok=True)
 
-    log_file = os.path.join(log_dir, f"{task_name}.log")
+    log_file = os.path.join(log_dir, f"{task_id}.log")
 
-    return log_file, task_name
+    return log_file, task_id
