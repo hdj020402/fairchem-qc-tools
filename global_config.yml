@@ -1,0 +1,15 @@
+model:
+  size: small
+  device: cuda
+
+task:
+  optimization:
+    run: True
+    traj: True
+    optimized_structure: True
+    fmax: 0.01
+    steps: 100000000
+  spe_calculation:
+    run: True
+  vib_calculation:
+    run: False
