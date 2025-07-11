@@ -1,4 +1,4 @@
-import logging
+import logging, os
 from fairchem.core import FAIRChemCalculator
 from ase import Atoms
 from ase.optimize import LBFGS
@@ -17,22 +17,28 @@ class QCCalculator:
         self.atoms.calc = calc
         self.logger = logger
         self.log_file = logger.handlers[0].baseFilename
+        self.log_dir = os.path.dirname(self.log_file)
 
     def optimization(
         self,
-        traj_file: str | None,
-        optimized_atoms_file: str | None,
+        traj: bool,
+        optimized_structure: bool,
         fmax: float=0.05,
         steps: int=100_000_000
         ):
         self.logger.info('Start optimization...')
+        if traj:
+            traj_file = os.path.join(self.log_dir, 'optimization.traj')
+        else:
+            traj_file = None
         optimizer = LBFGS(self.atoms, trajectory=traj_file, logfile=self.log_file)
         optimizer.run(fmax=fmax, steps=steps)
         optimized_energy = self.atoms.get_potential_energy()
         self.logger.info(f'Optimized energy: {optimized_energy} eV')
         self.logger.info(f'Standard orientation: \n{gen_xyz(self.atoms)}')
 
-        if optimized_atoms_file:
+        if optimized_structure:
+            optimized_atoms_file = os.path.join(self.log_dir, 'optimized_structure.xyz')
             write(optimized_atoms_file, self.atoms)
             self.logger.info(f'Optimized structure has been saved to {optimized_atoms_file}')
 
@@ -52,12 +58,12 @@ class QCCalculator:
 
     def vib_calculation(
         self,
-        name: str
         ):
         self.logger.info('Start vib calculation...')
+        name = os.path.join(self.log_dir, 'vib')
         vib = Vibrations(atoms=self.atoms, name=name)
         vib.run()
         vib.summary(log=self.log_file) # 打印频率总结
         vib.write_jmol() # 写入振动模式文件，可在Jmol中查看
-        vib.clean()
+        # vib.clean()
         self.logger.info('End vib calculation...')
