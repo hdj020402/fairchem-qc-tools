@@ -1,10 +1,10 @@
 model:
   size: small
-  device: cuda
+  device: cpu
 
 task:
   optimization:
-    run: True
+    run: False
     traj: True
     optimized_structure: True
     fmax: 0.01

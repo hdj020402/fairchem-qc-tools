@@ -9,7 +9,7 @@ structure:
 
 task:
   optimization:
-    run: True
+    run: False
     traj: True
     optimized_structure: True
     fmax: 0.01
