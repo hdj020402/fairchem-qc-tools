@@ -7,5 +7,5 @@ COPY pyproject.toml /app
 COPY uv.lock /app
 RUN uv sync
 COPY . /app
-RUN mkdir /model
+# RUN mkdir /model
 CMD ["uv", "run", "main.py"]
