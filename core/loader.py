@@ -2,8 +2,8 @@ from fairchem.core.units import mlip_unit
 from fairchem.core import FAIRChemCalculator
 
 MODEL = {
-    'small': 'model/UMA/uma-s-1p1',
-    'medium': 'model/UMA/uma-m-1p1',
+    'small': 'model/UMA/uma-s-1p1.pt',
+    'medium': 'model/UMA/uma-m-1p1.pt',
     'large': ''
 }
 
