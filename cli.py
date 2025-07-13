@@ -1,4 +1,4 @@
-import yaml, argparse
+import yaml, argparse, os
 import requests
 from core.utils import str2bool
 
@@ -58,6 +58,9 @@ def main():
         task_config: dict[str, dict] = yaml.safe_load(f)
 
     task_config = parse_args_into_config(task_config)
+    structure_file_path = task_config.get("structure", {}).get("file_path")
+    if structure_file_path and os.path.isfile(structure_file_path):
+        task_config['structure']['file_path'] = os.path.abspath(structure_file_path)
 
     host = task_config.get("service", {}).get("host", "localhost")
     port = task_config.get("service", {}).get("port", 8000)
