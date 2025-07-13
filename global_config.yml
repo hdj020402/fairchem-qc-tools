@@ -13,3 +13,5 @@ task:
     run: True
   vib_calculation:
     run: False
+  force_calculation:
+    run: True

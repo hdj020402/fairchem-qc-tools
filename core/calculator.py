@@ -4,7 +4,7 @@ from ase import Atoms
 from ase.optimize import LBFGS
 from ase.vibrations import Vibrations
 from ase.io import write
-from core.utils import gen_xyz
+from core.utils import gen_xyz, gen_forces, calc_forces_stats
 
 class QCCalculator:
     def __init__(
@@ -56,9 +56,7 @@ class QCCalculator:
 
         return energy
 
-    def vib_calculation(
-        self,
-        ):
+    def vib_calculation(self):
         self.logger.info('Start vib calculation...')
         name = os.path.join(self.log_dir, 'vib')
         vib = Vibrations(atoms=self.atoms, name=name)
@@ -67,3 +65,15 @@ class QCCalculator:
         vib.write_jmol() # 写入振动模式文件，可在Jmol中查看
         # vib.clean()
         self.logger.info('End vib calculation...')
+
+    def force_calculation(self):
+        self.logger.info('Start force calculation...')
+        force = self.atoms.get_forces()
+        self.logger.info(f'Forces: \n{gen_forces(self.atoms)}')
+        max_force_per_atom, rms_force_per_atom, max_force_component, rms_force_component = calc_forces_stats(force)
+        self.logger.info(f'Max force per atom: {max_force_per_atom:.6f}')
+        self.logger.info(f'RMS force per atom: {rms_force_per_atom:.6f}')
+        self.logger.info(f'Max force component: {max_force_component:.6f}')
+        self.logger.info(f'RMS force component: {rms_force_component:.6f}')
+        self.logger.info('End force calculation...')
+        return force, max_force_per_atom, rms_force_per_atom, max_force_component, rms_force_component
