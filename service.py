@@ -33,6 +33,7 @@ service_logger.info('Done!')
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     service_logger.info("QC Service started.")
+    service_logger.info(f'Model size: {config["model"]["size"]}, Device: {config["model"]["device"]}')
     yield
     service_logger.info("QC Service shutting down.")
     if config["model"].get("device") == "cuda":
@@ -101,6 +102,8 @@ async def run_qc_public(
         spin = get_config_value(updated_config, 'structure', 'spin', default=1)
         atoms = gen_atoms(tmpfile_path, charge, spin)
         qc = QCCalculator(atoms=atoms, calc=loader.calc, logger=current_task_logger)
+        current_task_logger.info(
+            f'Model size: {config["model"]["size"]}, Device: {config["model"]["device"]}')
         current_task_logger.info(f'Input orientation: \n{gen_xyz(atoms)}')
         current_task_logger.info(f"Charge: {atoms.info['charge']}, Spin: {atoms.info['spin']}")
 
