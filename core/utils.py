@@ -1,5 +1,6 @@
 import logging, argparse, re, os, time
 import string, secrets
+import numpy as np
 from ase import Atoms
 from ase.io import read
 
@@ -45,6 +46,34 @@ def gen_xyz(atoms: Atoms):
     for atom, pos in zip(atoms_list, positions):
         xyz.append(f'{atom} {pos[0]: .8f} {pos[1]: .8f} {pos[2]: .8f}')
     return '\n'.join(xyz)
+
+def gen_forces(atoms: Atoms):
+    atoms_list = atoms.get_chemical_symbols()
+    forces = atoms.get_forces()
+    forces_xyz = []
+    for atom, force in zip(atoms_list, forces):
+        forces_xyz.append(f'{atom} {force[0]: .8f} {force[1]: .8f} {force[2]: .8f}')
+    return '\n'.join(forces_xyz)
+
+import numpy as np
+
+def calc_forces_stats(forces: np.ndarray) -> dict:
+    if forces.ndim != 2 or forces.shape[1] != 3:
+        raise ValueError("Failed to calculate forces stats: input error!")
+
+    force_magnitudes = np.linalg.norm(forces, axis=1)
+
+    max_force_per_atom = np.max(force_magnitudes)
+    rms_force_per_atom = np.sqrt(np.mean(force_magnitudes ** 2))
+
+    flat_forces = forces.flatten()
+
+    max_force_component = np.max(np.abs(flat_forces))
+
+    rms_force_component = np.sqrt(np.mean(flat_forces ** 2))
+
+    return max_force_per_atom, rms_force_per_atom, max_force_component, rms_force_component
+
 
 def str2bool(v: str):
     if v is None:
