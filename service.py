@@ -1,6 +1,6 @@
 import yaml, os
 import tempfile
-from fastapi import FastAPI, UploadFile, File, Body, HTTPException
+from fastapi import FastAPI, UploadFile, File, Body, Form, HTTPException
 from contextlib import asynccontextmanager
 from core.loader import PredictorLoader
 from core.calculator import QCCalculator
@@ -57,8 +57,12 @@ async def run_qc_cli(task_config: dict = Body(...)):
     return await run_qc_public(updated_config)
 
 @app.post("/run-web")
-async def run_qc_web(structure_file: UploadFile = File(...),):
-    updated_config = ...
+async def run_qc_web(
+    structure_file: UploadFile = File(...),
+    task_config: str = Form(...)
+    ):
+    task_config = yaml.safe_load(task_config)
+    updated_config = update_dict(config, task_config)
     # TODO: edit config via front end
     # ?: where to save log files?
     # ?: when a structure is submitted from web, a temporary file is created at `./`,
