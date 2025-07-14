@@ -10,6 +10,7 @@ The QC Service is a FastAPI-based web service designed to run quantum chemistry 
   - Supports configuration via request payloads or global config files.
   - Logs detailed task information per execution.
 - **Model Management**:
+  - Uses the UMA model from [FairChem](https://github.com/facebookresearch/fairchem) for molecular property prediction.
   - Loads predictor models based on configuration (`PredictorLoader`).
   - Clears CUDA cache gracefully during shutdown if GPU is used.
 - **Logging System**:
@@ -56,6 +57,8 @@ The QC Service is a FastAPI-based web service designed to run quantum chemistry 
 ## Usage
 
 ### Running the Service
+
+#### With `uv`
 Ensure all dependencies are installed:
 
 ```bash
@@ -70,28 +73,67 @@ uv run uvicorn service:app --host 0.0.0.0 --port 8000
 
 The service will be available at `http://localhost:8000`.
 
+#### With `conda`
+Create a new environment and ensure all dependencies are installed:
+
+```bash
+conda create -n fairchem-qc-tools python=3.12
+conda activate fairchem-qc-tools
+pip install -r requirements.txt
+```
+
+Start the service using Uvicorn:
+
+```bash
+uvicorn service:app --host 0.0.0.0 --port 8000
+```
+
+The service will be available at `http://localhost:8000`.
+
 ---
 
 ### Example Requests
 
-#### Run via CLI Interface
-Send a POST request to `/run-cli` with a JSON payload containing your task configuration:
+#### Running via CLI Interface
 
-```json
-{
-  "structure": {
-    "file_path": "path/to/structure.xyz",
-    "charge": 0,
-    "spin": 1
-  },
-  "task": {
-    "optimize_geometry": {
-      "run": true,
-      "steps": 100
-    }
-  }
-}
+The CLI interface allows you to submit quantum chemistry tasks directly from the command line. Unlike running the full web service, using the CLI requires fewer dependencies and does not require starting a FastAPI server.
+
+##### Minimum Required Files
+To run the CLI, the following files are **required**:
+- `cli.py`: The main CLI script.
+- `task_config.yml`: Configuration file defining task parameters.
+- `core/utils.py`: Contains utility functions for configuration management, logging, and common data operations.
+
+These files can be placed in the same directory for simplicity.
+
+##### Setup (Optional)
+If you want to create a new environment, the following minimal dependencies are required:
+
+```plain text
+ase==3.25.0
+numpy==2.3.1
+PyYAML==6.0.2
+Requests==2.32.4
 ```
+
+These are significantly fewer than the full service dependencies, making the CLI a lightweight option for running quantum chemistry tasks without the overhead of the web server or machine learning model dependencies.
+
+##### Execution
+You can execute the CLI by specifying configuration options directly from the command line:
+
+```bash
+python cli.py --service.host <host_ip> --structure.file_path <structure_file>
+```
+
+Alternatively, you can modify the `task_config.yml` file in the same directory to predefine your settings.
+
+##### Output and Logging
+After submission, a `logs/` directory will be created within the structure file's directory. Each task generates a subdirectory named according to the format `<task_timestamp_uid>/`, and the log file is saved as `<task_timestamp_uid>.log`.
+
+> ⚠️ Permissions Note: If the service runs under elevated privileges (e.g., root), generated logs may be read-only for regular users. Consider adjusting permissions or running the service under a standard user if this causes issues.
+
+##### Summary
+The CLI mode offers a lightweight way to perform quantum chemistry calculations without launching the full web service. It supports direct command-line arguments or configuration through `task_config.yml`, and it generates structured logs for tracking and debugging.
 
 #### Upload via Web Interface
 Use `/run-web` to upload a molecular structure file directly:
