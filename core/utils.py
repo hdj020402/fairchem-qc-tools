@@ -19,7 +19,8 @@ def setup_logger(logger_name: str, log_file: str, level=logging.INFO) -> logging
     return logger
 
 def gen_atoms(file_path: str, charge: int=0, spin: int=1):
-    atoms = read(file_path)
+    with open(file_path) as f:
+        atoms = read(f)
     if file_path.endswith('.xyz'):
         ...
     elif file_path.endswith('.gjf'):
