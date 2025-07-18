@@ -1,4 +1,4 @@
-import yaml, os
+import yaml, os, logging
 import tempfile
 from fastapi import FastAPI, UploadFile, File, Body, Form, HTTPException
 from contextlib import asynccontextmanager
@@ -140,6 +140,12 @@ async def run_qc_public(
         current_task_logger.error(error_msg, exc_info=True)
         raise HTTPException(status_code=500, detail=error_msg)
 
+    finally:
+        if current_task_logger:
+            for handler in current_task_logger.handlers[:]:
+                if isinstance(handler, logging.FileHandler):
+                    handler.close()
+                current_task_logger.removeHandler(handler)
 @app.get("/logs/{task_id}")
 async def get_task_log(task_id: str):
     log_dir = os.path.join("logs", task_id)
