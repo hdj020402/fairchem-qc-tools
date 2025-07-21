@@ -150,7 +150,7 @@ def parse_args_into_config():
     if args.command == 'run':
         config = {}
         for key, value in vars(args).items():
-            if key not in ['command']:
+            if key not in ['command'] and value is not None:
                 set_nested_value(config, key, value)
         return 'run', config
     elif args.command == 'log':
