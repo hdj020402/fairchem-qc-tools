@@ -1,6 +1,7 @@
 import yaml, os, logging
 import tempfile
-from fastapi import FastAPI, UploadFile, File, Body, Form, HTTPException
+from fastapi import FastAPI, UploadFile, File, Body, Form, Query, HTTPException
+from fastapi.responses import StreamingResponse
 from contextlib import asynccontextmanager
 from core.loader import PredictorLoader
 from core.calculator import QCCalculator
@@ -73,7 +74,7 @@ async def run_qc_web(
 async def run_qc_public(
     updated_config: dict,
     structure_file: UploadFile | None = None,
-    ):
+    ) -> dict[str, str]:
     if structure_file:
         filename = structure_file.filename
     else:
@@ -146,8 +147,9 @@ async def run_qc_public(
                 if isinstance(handler, logging.FileHandler):
                     handler.close()
                 current_task_logger.removeHandler(handler)
+
 @app.get("/logs/{task_id}")
-async def get_task_log(task_id: str):
+async def get_task_log(task_id: str) -> dict[str, str]:
     log_dir = os.path.join("logs", task_id)
     log_file = os.path.join(log_dir, f"{task_id}.log")
 
@@ -162,4 +164,54 @@ async def get_task_log(task_id: str):
         "log": content
     }
 
+@app.get("/download/{task_id}")
+async def download_task_folder(
+    task_id: str,
+    archive_format: str = Query("zip", regex="^(zip|tar.gz)$"),
+    ) -> StreamingResponse:
+    import io, tarfile
+    from zipfile import ZipFile, ZIP_DEFLATED
+    from core.utils import get_folder_size
+
+    task_dir = os.path.join("logs", task_id)
+
+    if not os.path.isdir(task_dir):
+        raise HTTPException(status_code=404, detail="Task folder not found")
+
+    max_size = 1024 * 1024 * 1024
+    folder_size = get_folder_size(task_dir)
+    if folder_size > max_size:
+        raise HTTPException(status_code=413, detail="Task folder too large to download")
+
+    try:
+        if archive_format == "zip":
+            zip_buffer = io.BytesIO()
+            with ZipFile(zip_buffer, mode="w", compression=ZIP_DEFLATED) as zip_file:
+                for root, dirs, files in os.walk(task_dir):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        arcname = os.path.relpath(file_path, start="logs")
+                        zip_file.write(file_path, arcname=arcname)
+
+            zip_buffer.seek(0)
+            content = zip_buffer.getvalue()
+            media_type = "application/zip"
+            headers = {
+                "Content-Disposition": f"attachment; filename={task_id}.zip"
+            }
+
+        elif archive_format == "tar.gz":
+            tar_buffer = io.BytesIO()
+            with tarfile.open(fileobj=tar_buffer, mode="w:gz") as tar:
+                tar.add(task_dir, arcname=os.path.basename(task_dir))
+            tar_buffer.seek(0)
+            content = tar_buffer.getvalue()
+            media_type = "application/gzip"
+            headers = {"Content-Disposition": f"attachment; filename={task_id}.tar.gz"}
+
+        return StreamingResponse(io.BytesIO(content), media_type=media_type, headers=headers)
+
+    except Exception as e:
+        service_logger.error(f"Error creating {archive_format} archive for task {task_id}: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to create {archive_format} archive: {str(e)}")
 
