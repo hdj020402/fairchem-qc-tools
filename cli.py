@@ -37,6 +37,10 @@ def parse_args_into_config(config: dict):
     parser.add_argument('--task.vib_calculation.run', nargs='?', const=True, default=None,
                         type=str2bool, help='Whether to run vibrational analysis')
 
+    # Task - Force Calculation
+    parser.add_argument('--task.force_calculation.run', nargs='?', const=True, default=None,
+                            type=str2bool, help='Whether to run force calculation')
+
     args = parser.parse_args()
 
     # Apply overrides using dot notation
