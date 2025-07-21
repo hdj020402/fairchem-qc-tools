@@ -180,3 +180,12 @@ def build_task_log_info(filepath: str):
     log_file = os.path.join(log_dir, f"{task_id}.log")
 
     return log_file, task_id
+
+def get_folder_size(folder: str) -> int:
+    total_size = 0
+    for dirpath, _, filenames in os.walk(folder):
+        for f in filenames:
+            fp = os.path.join(dirpath, f)
+            if os.path.isfile(fp):
+                total_size += os.path.getsize(fp)
+    return total_size
