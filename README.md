@@ -135,25 +135,69 @@ After submission, a `logs/` directory will be created within the structure file'
 ##### Summary
 The CLI mode offers a lightweight way to perform quantum chemistry calculations without launching the full web service. It supports direct command-line arguments or configuration through `task_config.yml`, and it generates structured logs for tracking and debugging.
 
-#### Upload via Web Interface
-Use `/run-web` to upload a molecular structure file directly:
+#### Running via Web Interface
+
+The `web.py` script provides a command-line interface that mimics web-based interaction with the service. It is ideal for users who want to:
+
+- Avoid setting up a local environment
+- Retrieve task logs
+- Download entire task result folders (including logs and binary files)
+
+Unlike `cli.py`, this method **requires uploading a molecular structure file** and **does not return results directly** after task completion. Instead, users must manually download results using the returned `task_id`.
+
+##### Minimum Required Files
+To use `web.py`, the following files are **required**:
+- `web.py`: The main CLI script.
+- A molecular structure file (`.xyz`, `.gjf`, etc.)
+
+##### Setup
+No dependencies are required — `web.py` only uses built-in Python libraries (`argparse`, `subprocess`, `json`, etc.).
+You can run it directly with any Python 3 environment:
 
 ```bash
-curl -X POST http://localhost:8000/run-web \
-  -H "Content-Type: multipart/form-data" \
-  -F "structure_file=@your_structure.xyz"
+python web.py --help
 ```
 
----
+##### Execution
 
-### Retrieve Task Logs
-To retrieve logs for a completed task, use:
+You can submit a task using command-line arguments:
 
 ```bash
-GET /logs/{task_id}
+python web.py run \
+  --structure.file_path test/test.xyz \
+  --task.optimization.run \
+  --task.optimization.fmax 0.02 \
+  --task.spe_calculation.run
 ```
 
-This returns the full log content for the specified task.
+After submission, the service returns a `task_id`. You can then:
+
+- Retrieve logs:
+  ```bash
+  python web.py log --task_id abc123
+  ```
+
+- Download the full task folder:
+  ```bash
+  python web.py download --task_id abc123 --archive_format zip --output abc123.zip
+  ```
+
+##### Output and Logging
+
+- Output from the commands is printed to the terminal.
+- Logs and results are stored on the server and must be retrieved separately using the `log` and `download` subcommands.
+
+##### Summary
+
+| Feature | `cli.py` | `web.py` |
+|--------|----------|----------|
+| Upload structure file | ❌ No | ✅ Yes |
+| Direct result output | ✅ Yes | ❌ No (requires download) |
+| Lightweight | ✅ Yes | ✅ Yes |
+| Suitable for automation | ✅ Yes | ✅ Yes |
+| Requires server interaction | ✅ Yes | ✅ Yes |
+
+The `web.py` tool provides a flexible way to interact with the QC Service. It mirrors the web interface behavior and is ideal for integration with scripts or pipelines.
 
 ---
 
