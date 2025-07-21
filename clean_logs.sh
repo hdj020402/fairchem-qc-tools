@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd "$(dirname "$0")" || exit 1
+
 LOG_DIR="logs"
 SERVICE_LOG="service.log"
 
